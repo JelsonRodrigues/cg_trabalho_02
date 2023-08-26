@@ -21,5 +21,9 @@
     "build:prod": "webpack --mode=production --node-env=production",
     "watch": "webpack --watch",
     "serve": "webpack serve"
+  },
+  "dependencies": {
+    "gl-matrix": "^3.4.3",
+    "webpack-glsl-loader": "^1.0.1"
   }
 }
