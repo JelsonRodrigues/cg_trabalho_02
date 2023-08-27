@@ -4,16 +4,18 @@ import { Spline } from "../modules/Spline";
 import { CubicBezierCurve } from "../modules/CubicBezierCurve";
 import { DrawableObject } from "./DrawableObject";
 import { Camera } from "./Camera";
-import { Ground } from "./Ground";
+import { Terrain } from "./Terrain";
 import { MovingCamera } from "./MovingCamera";
 import { SplinePoints } from "./SplinePoints";
 import { AnimatedObject } from "./AnimatedObject";
 import WebGLUtils from "./WebGLUtils";
+import { Origin } from "./Origin";
 
 var canva : HTMLCanvasElement;
 var gl : WebGL2RenderingContext;
 
 var spline : Spline;
+var terrain : Terrain;
 var objects : Array<DrawableObject> = new Array();
 var animated_objects : Array<AnimatedObject> = new Array();
 var cameras : Array<Camera> = new Array();
@@ -26,8 +28,8 @@ var start = Date.now();
 var perspective = glm.mat4.create();
 
 function canvasResize(canva:HTMLCanvasElement) {
-  const widht = window.innerWidth - 25;
-  const height = window.innerHeight - 50;
+  const widht = window.innerWidth - 20;
+  const height = window.innerHeight - 20;
   canva.width = widht;
   canva.height = height;
   canva.style.width = `${widht}px`;
@@ -35,9 +37,6 @@ function canvasResize(canva:HTMLCanvasElement) {
 }
 
 async function main() {
-  // Get the slider
-  animation_slider = document.getElementById("animationSlider") as HTMLInputElement;
-
   // Get canvas
   canva = document.getElementById("mainCanvas") as HTMLCanvasElement;
   canvasResize(canva);
@@ -45,22 +44,41 @@ async function main() {
   // Setup gl
   gl = canva.getContext("webgl2") as WebGL2RenderingContext;
   gl.enable(gl.DEPTH_TEST);
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(0.15, 0.18, 0.15, 1.0);
   gl.clear(WebGL2RenderingContext.COLOR_BUFFER_BIT)
   gl.viewport(0, 0, canva.width, canva.height)
 
   // Create the perspective matrix
   const field_of_view = Math.PI / 4.0;
-  const near = 1;
-  const far = 1000;
+  const near = 0.01;
+  const far = 100.0;
   const aspect_ratio = canva.width / canva.height;
   glm.mat4.perspective(perspective, field_of_view, aspect_ratio, near, far);
 
+  const camera_path = new Spline();
+  camera_path.addCurve(new CubicBezierCurve(
+    glm.vec3.fromValues(-1.0, 0.9, 0.0),
+    glm.vec3.fromValues(0.0, 1.0, 1.0),
+    glm.vec3.fromValues(0.0, 1.0, 1.0),
+    glm.vec3.fromValues(1.0, 0.9, 0.0),
+  ));
+
+  const moving_camera = new MovingCamera([0, 1, 0], camera_path, 10000);
+
   cameras.push(
-    new Camera([0.5, 0.4, 0], [0, 0, 0], [0, 1, 0]),
+    new Camera([0.15, 1.0, 0], [0, 0, 0], [0, 1, 0]),
+    moving_camera,
   );
 
-  objects.push();
+  terrain = new Terrain(gl);
+  objects.push(
+    terrain,
+    new Origin(gl),
+  );
+
+  animated_objects.push(
+    moving_camera,
+  );
 
   setupEventHandlers();
   start = Date.now();
@@ -75,18 +93,6 @@ var spline_modifiyng : SplinePoints | null = null;
 var left_control_pressed = false;
 
 function setupEventHandlers() {
-  // play button
-  const button = document.getElementById("playButton") as HTMLButtonElement
-  button.addEventListener("click", (event) => {
-    current_camera = 1;
-    animated_objects.forEach(
-      (object) => {
-        object.resetAnimation();
-        object.resumeAnimation();
-      }
-    );
-  });
-
   window.addEventListener('keydown', (event) => {
     let camera = cameras[current_camera];
     const camera_position = camera.getCameraPosition();
@@ -298,10 +304,10 @@ function setupEventHandlers() {
     glm.vec3.normalize(normalized_vec, origin_camera_vec);
     
     if (event.deltaY > 0) {
-      glm.vec3.scaleAndAdd(camera_position_in_world, look_at, normalized_vec, old_size + 1.00);
+      glm.vec3.scaleAndAdd(camera_position_in_world, look_at, normalized_vec, old_size + 0.05);
     }
     else if (event.deltaY < 0) {
-      glm.vec3.scaleAndAdd(camera_position_in_world, look_at, normalized_vec, old_size - 1.00);
+      glm.vec3.scaleAndAdd(camera_position_in_world, look_at, normalized_vec, old_size - 0.05);
     }
 
     camera.updateCameraPosition(camera_position_in_world);
@@ -371,7 +377,7 @@ function setupEventHandlers() {
 
     begin_movement = glm.vec2.clone(current_position);
     glm.vec3.add(camera_position_in_world, look_at_point, look_at_to_camera_position_vec);
-    if (camera_position_in_world[1] < 0.5) camera_position_in_world[1] = 0.5; // do not let camera go underground
+    if (camera_position_in_world[1] < 0.0) camera_position_in_world[1] = 0.0; // do not let camera go underground
     camera.updateCameraPosition(camera_position_in_world);
   }
 
@@ -405,16 +411,30 @@ function setupEventHandlers() {
   }
 }
 
-
 function animate() {
-
   updateAnimation();
-  // Create model matrix
-  const model = glm.mat4.create();
-  
-  let camera = cameras[current_camera];
+
+  const camera = cameras[current_camera];
   
   const view_matrix = camera.getViewMatrix();
+  
+  const look_at_point = camera.getCameraLookingAt();
+  const position_camera = camera.getCameraPosition();
+  const camera_matrix = camera.getCameraMatrix();
+
+  const look_direction = glm.vec3.sub(glm.vec3.create(), look_at_point, position_camera);
+  look_direction[1] = 0; // zero the y axis;
+  glm.vec3.normalize(look_direction, look_direction);
+
+  const angle_between_lookat_and_x_axis = glm.vec3.angle(look_direction, [camera_matrix[8], camera_matrix[9], camera_matrix[10]]);
+
+  // glm.mat4.rotate(terrain.model, glm.mat4.create(), -angle_between_lookat_and_x_axis, [0.0, 1.0, 0.0]);
+  // glm.mat4.scale(terrain.model, terrain.model, [20.0, 1.0, 20.0]);
+  // terrain.model[12] = look_at_point[0]-0.5;
+  // terrain.model[14] = look_at_point[2]-0.5;
+  
+  // terrain.updateCosOfLookAt(cos_between_lookat_and_x_axis);
+  // terrain.updateCameraPos(glm.vec2.fromValues((position_camera[0]-0.5)*2, (position_camera[2]-0.5)*2));
 
   gl.clear(WebGL2RenderingContext.COLOR_BUFFER_BIT);
   objects.forEach((drawable_obj) => {
