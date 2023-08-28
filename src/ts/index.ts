@@ -51,7 +51,7 @@ async function main() {
   // Create the perspective matrix
   const field_of_view = Math.PI / 4.0;
   const near = 0.01;
-  const far = 100.0;
+  const far = 1000.0;
   const aspect_ratio = canva.width / canva.height;
   glm.mat4.perspective(perspective, field_of_view, aspect_ratio, near, far);
 
@@ -417,24 +417,15 @@ function animate() {
   const camera = cameras[current_camera];
   
   const view_matrix = camera.getViewMatrix();
-  
-  const look_at_point = camera.getCameraLookingAt();
-  const position_camera = camera.getCameraPosition();
   const camera_matrix = camera.getCameraMatrix();
-
-  const look_direction = glm.vec3.sub(glm.vec3.create(), look_at_point, position_camera);
-  look_direction[1] = 0; // zero the y axis;
-  glm.vec3.normalize(look_direction, look_direction);
-
-  const angle_between_lookat_and_x_axis = glm.vec3.angle(look_direction, [camera_matrix[8], camera_matrix[9], camera_matrix[10]]);
-
-  // glm.mat4.rotate(terrain.model, glm.mat4.create(), -angle_between_lookat_and_x_axis, [0.0, 1.0, 0.0]);
-  // glm.mat4.scale(terrain.model, terrain.model, [20.0, 1.0, 20.0]);
-  // terrain.model[12] = look_at_point[0]-0.5;
-  // terrain.model[14] = look_at_point[2]-0.5;
   
-  // terrain.updateCosOfLookAt(cos_between_lookat_and_x_axis);
-  // terrain.updateCameraPos(glm.vec2.fromValues((position_camera[0]-0.5)*2, (position_camera[2]-0.5)*2));
+  // const terrain_origin = glm.vec3.create();
+  // glm.vec3.transformMat4(terrain_origin, terrain_origin, terrain.model);
+
+  // terrain.model = glm.mat4.targetTo(glm.mat4.create(), terrain_origin, camera.getCameraPosition(), camera.getCameraUpVector());
+
+  // glm.mat4.multiply(terrain.model, glm.mat4.create(), camera_matrix);
+  
 
   gl.clear(WebGL2RenderingContext.COLOR_BUFFER_BIT);
   objects.forEach((drawable_obj) => {
@@ -455,5 +446,7 @@ function updateAnimation() {
     }
   );
   before = now;
+
+  // terrain.camera_pos[0] = (fElapsedTime / 1000.0 * 0.01 + terrain.camera_pos[0]) % 1.0;
 }
 window.onload = main
