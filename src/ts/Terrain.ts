@@ -27,7 +27,6 @@ export class Terrain implements DrawableObject {
   private static vertices : number = 0;
   private static faces : number = 0;
 
-
   constructor (gl : WebGL2RenderingContext) {
     this.model = glm.mat4.create();
     glm.mat4.scale(this.model, this.model, [20, 20, 20]);
@@ -160,7 +159,8 @@ export class Terrain implements DrawableObject {
       };
     });
 
-    fetch("objects/Terrain/Mountain Range Height Map PNG.png")
+    fetch("objects/Terrain/Mountain Range Height Map PNG Fixed.png")
+    // fetch("objects/Terrain/Mountain Range Height Map PNG.png")
     // fetch("objects/Terrain/Rugged Terrain with Rocky Peaks Height Map PNG.png")
     .then(response => response.blob())
     .then(blob => {
@@ -169,12 +169,16 @@ export class Terrain implements DrawableObject {
       image.onload = () => {
         gl.bindTexture(WebGL2RenderingContext.TEXTURE_2D, Terrain.height_map);
         gl.texImage2D(WebGL2RenderingContext.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-        gl.generateMipmap(gl.TEXTURE_2D);
+        // gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(WebGL2RenderingContext.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(WebGL2RenderingContext.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(WebGL2RenderingContext.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(WebGL2RenderingContext.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       };
     });
 
     // Create terrain mesh
-    const [data, indexes] = this.createMesh();
+    const [data, indexes] = this.createMesh(2048);
 
     gl.bindBuffer(WebGL2RenderingContext.ARRAY_BUFFER, Terrain.buffer_vertices);
     gl.bufferData(
@@ -258,8 +262,7 @@ export class Terrain implements DrawableObject {
     return [data, indexes];
   }
 
-  private createMesh() : [Float32Array, Uint32Array] {
-    const grid_size = 128;
+  private createMesh(grid_size:number = 128) : [Float32Array, Uint32Array] {
     const step = 1.0/(grid_size-1);
 
     const data = new Float32Array( 3 * grid_size * grid_size);
