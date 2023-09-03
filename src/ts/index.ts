@@ -55,25 +55,34 @@ async function main() {
   const aspect_ratio = canva.width / canva.height;
   glm.mat4.perspective(perspective, field_of_view, aspect_ratio, near, far);
 
-  const camera_path = new Spline();
-  camera_path.addCurve(new CubicBezierCurve(
-    glm.vec3.fromValues(-1.0, 0.9, 0.0),
-    glm.vec3.fromValues(0.0, 1.0, 1.0),
-    glm.vec3.fromValues(0.0, 1.0, 1.0),
-    glm.vec3.fromValues(1.0, 0.9, 0.0),
-  ));
-
-  const moving_camera = new MovingCamera([0, 1, 0], camera_path, 10000);
-
-  cameras.push(
-    new Camera([0.15, 1.0, 0], [0, 0, 0], [0, 1, 0]),
-    moving_camera,
-  );
-
   terrain = new Terrain(gl);
   objects.push(
     terrain,
     new Origin(gl),
+  );
+  
+  const camera_path = new Spline();
+  camera_path.addCurve(new CubicBezierCurve(
+    glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(0.0, 0.6, 0.0), terrain.model),
+    glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(0.5, 0.65, 1.0), terrain.model),
+    glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(0.5, 0.65, 1.0), terrain.model),
+    glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(0.1, 0.6, 0.0), terrain.model),
+  ));
+
+  const moving_camera = new MovingCamera([0, 1, 0], camera_path, 10000);
+
+  /*
+    The middle of the terrain is at coordinates (0.5, 0.0, 0.5)
+    The terrain floor is not at 0.0, is a the height of aproximately 0.5725, 
+    so I position the camera a little above in relation to the terrain
+  */
+  const terrain_point_location = glm.vec3.transformMat4(glm.vec3.create(), [0.5, 0.58, 0.5], terrain.model);
+  const random_look_point = glm.vec3.add(glm.vec3.create(), terrain_point_location, [(2.0*Math.random()) - 1.0, -0.1, (2.0*Math.random()) - 1.0]);
+  const terrain_up_vector = glm.vec3.transformMat3(glm.vec3.create(), [0, 1, 0], glm.mat3.fromMat4(glm.mat3.create(), terrain.model));
+
+  cameras.push(
+    new Camera(terrain_point_location, random_look_point,terrain_up_vector),
+    moving_camera,
   );
 
   animated_objects.push(

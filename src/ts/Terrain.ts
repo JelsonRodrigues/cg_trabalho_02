@@ -8,7 +8,7 @@ import fragmentSource from "../shaders/terrainFS.glsl";
 
 export class Terrain implements DrawableObject {
   public model : glm.mat4;
-  public camera_pos : glm.vec2 = glm.vec2.fromValues(0, 0);
+  // public camera_pos : glm.vec2 = glm.vec2.fromValues(0, 0);
 
   private static initialized : boolean = false;
   private static program : WebGLProgram;
@@ -29,10 +29,9 @@ export class Terrain implements DrawableObject {
 
   constructor (gl : WebGL2RenderingContext) {
     this.model = glm.mat4.create();
-    glm.mat4.scale(this.model, this.model, [20, 20, 20]);
+    glm.mat4.scale(this.model, this.model, [40, 40, 40]);
     glm.mat4.rotateY(this.model, this.model, -Math.PI / 2);
-    glm.mat4.translate(this.model, this.model, [-0.5, -0.4, -0.5]);
-    // glm.mat4.translate(this.model, this.model, [-0.5, -0.4, -1.0]);
+    glm.mat4.translate(this.model, this.model, [-0.5, 0.0, -0.5]);
     
     if (!Terrain.initialized) {
       this.setup(gl);
@@ -49,7 +48,7 @@ export class Terrain implements DrawableObject {
     gl.uniformMatrix4fv(Terrain.u_model, false, this.model);
     gl.uniformMatrix4fv(Terrain.u_view, false, view);
     gl.uniformMatrix4fv(Terrain.u_projection, false, projection);
-    gl.uniform2f(Terrain.u_camera_position, this.camera_pos[0], this.camera_pos[1]);
+    // gl.uniform2f(Terrain.u_camera_position, this.camera_pos[0], this.camera_pos[1]);
 
     gl.uniform1i(Terrain.u_height_map, 0);
     gl.uniform1i(Terrain.u_texture, 1);
@@ -88,7 +87,7 @@ export class Terrain implements DrawableObject {
     Terrain.u_projection = gl.getUniformLocation(Terrain.program, "u_projection") as WebGLUniformLocation;
     Terrain.u_height_map = gl.getUniformLocation(Terrain.program, "u_heightmap") as WebGLUniformLocation;
     Terrain.u_texture = gl.getUniformLocation(Terrain.program, "u_texture") as WebGLUniformLocation;
-    Terrain.u_camera_position = gl.getUniformLocation(Terrain.program, "camera_position") as WebGLUniformLocation;
+    // Terrain.u_camera_position = gl.getUniformLocation(Terrain.program, "camera_position") as WebGLUniformLocation;
     
     Terrain.a_position = gl.getAttribLocation(Terrain.program, "position");
     Terrain.texture = gl.createTexture() as WebGLTexture;
@@ -146,8 +145,8 @@ export class Terrain implements DrawableObject {
     gl.bindVertexArray(null);
 
     // Start loading textures
-    fetch("objects/Terrain/Mountain Range Diffuse PNG.png")
-    // fetch("objects/Terrain/Rugged Terrain with Rocky Peaks Diffuse PNG.png")
+    // fetch("objects/Terrain/Mountain Range Diffuse PNG.png")
+    fetch("objects/Terrain/Rugged Terrain with Rocky Peaks Diffuse PNG.png")
     .then(response => response.blob())
     .then(blob => {
       const image = new Image();
@@ -159,9 +158,8 @@ export class Terrain implements DrawableObject {
       };
     });
 
-    fetch("objects/Terrain/Mountain Range Height Map PNG Fixed.png")
-    // fetch("objects/Terrain/Mountain Range Height Map PNG.png")
-    // fetch("objects/Terrain/Rugged Terrain with Rocky Peaks Height Map PNG.png")
+    // fetch("objects/Terrain/Mountain Range Height Map PNG Fixed.png")
+    fetch("objects/Terrain/Rugged Terrain with Rocky Peaks Height Map PNG Fixed.png")
     .then(response => response.blob())
     .then(blob => {
       const image = new Image();
@@ -291,7 +289,7 @@ export class Terrain implements DrawableObject {
     return [ data, indexes ];
   }
 
-  public updateCameraPosition(new_pos : glm.vec2) {
-    this.camera_pos = new_pos;
-  }
+  // public updateCameraPosition(new_pos : glm.vec2) {
+  //   this.camera_pos = new_pos;
+  // }
 }
