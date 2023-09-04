@@ -1,10 +1,12 @@
-import { DrawableObject} from "./DrawableObject";
-import { Spline } from "../modules/Spline"
+import { DrawableObject} from "../Interfaces/DrawableObject";
+import { Spline } from "../../modules/Spline"
 import * as glm from "gl-matrix";
-import { WebGLUtils } from "./WebGLUtils";
+import { WebGLUtils } from "../WebGLUtils";
 
-import vertexSource from "../shaders/vertexShader.glsl";
-import fragmentSource from "../shaders/fragmentShader.glsl";
+import vertexSource from "../../shaders/vertexShader.glsl";
+import fragmentSource from "../../shaders/fragmentShader.glsl";
+import { Camera } from "../Camera/Camera";
+import { Light } from "../Light/Light";
 
 export class SplinePoints implements DrawableObject {
   public model : glm.mat4;
@@ -40,7 +42,8 @@ export class SplinePoints implements DrawableObject {
     this.updateSplinePoints(gl);
   }
 
-  draw(gl: WebGL2RenderingContext, view : glm.mat4, projection : glm.mat4) : void {
+  draw(gl : WebGL2RenderingContext, camera : Camera, projection : glm.mat4, lights : Light[]) : void {
+    const view = camera.getViewMatrix();
     // gl.disable(gl.DEPTH_TEST);
     gl.useProgram(SplinePoints.program as WebGLProgram);
 

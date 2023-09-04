@@ -8,6 +8,11 @@ out vec4 outColor;
 
 uniform sampler2D u_texture;
 
+// Directional Light informations
+uniform vec3 directional_light_vec;
+uniform vec3 directional_light_color;
+
+
 #define AMBIENT_LIGHT (0.1)
 
 void main(){

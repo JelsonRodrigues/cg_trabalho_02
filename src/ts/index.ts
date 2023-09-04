@@ -2,14 +2,15 @@ import * as glm from "gl-matrix";
 
 import { Spline } from "../modules/Spline";
 import { CubicBezierCurve } from "../modules/CubicBezierCurve";
-import { DrawableObject } from "./DrawableObject";
-import { Camera } from "./Camera";
-import { Terrain } from "./Terrain";
-import { MovingCamera } from "./MovingCamera";
-import { SplinePoints } from "./SplinePoints";
-import { AnimatedObject } from "./AnimatedObject";
+import { DrawableObject } from "./Interfaces/DrawableObject";
+import { Camera } from "./Camera/Camera";
+import { Terrain } from "./Objects/Terrain";
+import { MovingCamera } from "./Camera/MovingCamera";
+import { SplinePoints } from "./Objects/SplinePoints";
+import { AnimatedObject } from "./Interfaces/AnimatedObject";
 import WebGLUtils from "./WebGLUtils";
-import { Origin } from "./Origin";
+import { Origin } from "./Objects/Origin";
+import { Light } from "./Light/Light";
 
 var canva : HTMLCanvasElement;
 var gl : WebGL2RenderingContext;
@@ -20,6 +21,7 @@ var objects : Array<DrawableObject> = new Array();
 var animated_objects : Array<AnimatedObject> = new Array();
 var cameras : Array<Camera> = new Array();
 var current_camera : number = 0;
+var lights : Array<Light>;
 
 // Animation
 var animation_slider : HTMLInputElement;
@@ -91,7 +93,7 @@ async function main() {
 
   setupEventHandlers();
   start = Date.now();
-  animate();
+  gameLoop();
 }
 
 var begin_movement : glm.vec2 = glm.vec2.create();
@@ -420,29 +422,20 @@ function setupEventHandlers() {
   }
 }
 
-function animate() {
+function gameLoop() {
+  updatePhisics();
   updateAnimation();
+  drawFrame();
+  requestAnimationFrame(gameLoop);
+}
 
+function drawFrame() {
   const camera = cameras[current_camera];
-  
-  const view_matrix = camera.getViewMatrix();
-  const camera_matrix = camera.getCameraMatrix();
-  
-  // const terrain_origin = glm.vec3.create();
-  // glm.vec3.transformMat4(terrain_origin, terrain_origin, terrain.model);
-
-  // terrain.model = glm.mat4.targetTo(glm.mat4.create(), terrain_origin, camera.getCameraPosition(), camera.getCameraUpVector());
-
-  // glm.mat4.multiply(terrain.model, glm.mat4.create(), camera_matrix);
-  
-
   gl.clear(WebGL2RenderingContext.COLOR_BUFFER_BIT);
   objects.forEach((drawable_obj) => {
-      drawable_obj.draw(gl, view_matrix, perspective);
+      drawable_obj.draw(gl, camera, perspective, lights);
     }
   );
-  
-  requestAnimationFrame(animate);
 }
 
 var before:number = 0;
@@ -455,7 +448,11 @@ function updateAnimation() {
     }
   );
   before = now;
-
-  // terrain.camera_pos[0] = (fElapsedTime / 1000.0 * 0.01 + terrain.camera_pos[0]) % 1.0;
 }
+
+function updatePhisics() {
+  // Check colisions 
+  // Remove objects
+}
+
 window.onload = main

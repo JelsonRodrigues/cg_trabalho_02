@@ -1,10 +1,12 @@
-import { DrawableObject} from "./DrawableObject";
+import { DrawableObject} from "../Interfaces/DrawableObject";
 import * as glm from "gl-matrix";
 
-import { WebGLUtils } from "./WebGLUtils";
+import { WebGLUtils } from "../WebGLUtils";
 
-import vertexSource from "../shaders/terrainVS.glsl";
-import fragmentSource from "../shaders/terrainFS.glsl";
+import vertexSource from "../../shaders/terrainVS.glsl";
+import fragmentSource from "../../shaders/terrainFS.glsl";
+import { Light } from "../Light/Light";
+import { Camera } from "../Camera/Camera";
 
 export class Terrain implements DrawableObject {
   public model : glm.mat4;
@@ -40,7 +42,9 @@ export class Terrain implements DrawableObject {
     Terrain.initialized = true;
   }
 
-  draw(gl: WebGL2RenderingContext, view : glm.mat4, projection : glm.mat4) : void {
+  draw(gl: WebGL2RenderingContext, camera : Camera, projection : glm.mat4, lights : Light[]) : void {
+    const view = camera.getViewMatrix();
+    
     gl.useProgram(Terrain.program as WebGLProgram);
 
     gl.bindVertexArray(Terrain.vao);

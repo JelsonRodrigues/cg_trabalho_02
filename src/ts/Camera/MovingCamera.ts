@@ -1,5 +1,5 @@
-import { Spline } from "../modules/Spline";
-import { AnimatedObject } from "./AnimatedObject";
+import { Spline } from "../../modules/Spline";
+import { AnimatedObject } from "../Interfaces/AnimatedObject";
 import { Camera } from "./Camera";
 
 import * as glm from "gl-matrix";
