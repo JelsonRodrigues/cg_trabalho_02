@@ -17,5 +17,5 @@ export class PointLight implements Light {
   getRadius() : number { return this.radius; }
   setColor(color:glm.vec3) { this.color = color; }
   setPosition(position:glm.vec3) { this.position = position; }
-  setRadigus(radius : number) { this.radius = radius; }
+  setRadius(radius : number) { this.radius = radius; }
 }

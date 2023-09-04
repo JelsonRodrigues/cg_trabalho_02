@@ -7,12 +7,15 @@ import vertexSource from "../../shaders/terrainVS.glsl";
 import fragmentSource from "../../shaders/terrainFS.glsl";
 import { Light } from "../Light/Light";
 import { Camera } from "../Camera/Camera";
+import { DirectionalLight } from "../Light/DirectionalLight";
+import { PointLight } from "../Light/PointLight";
 
 export class Terrain implements DrawableObject {
   public model : glm.mat4;
   // public camera_pos : glm.vec2 = glm.vec2.fromValues(0, 0);
 
   private static initialized : boolean = false;
+
   private static program : WebGLProgram;
   private static vao : WebGLVertexArrayObject;
   private static buffer_vertices : WebGLBuffer;
@@ -20,6 +23,13 @@ export class Terrain implements DrawableObject {
   private static u_model : WebGLUniformLocation;
   private static u_view : WebGLUniformLocation;
   private static u_projection : WebGLUniformLocation;
+  private static u_inverse_transpose_model : WebGLUniformLocation;
+  private static u_directional_light_vec : WebGLUniformLocation;
+  private static u_directional_light_color : WebGLUniformLocation;
+  private static u_point_light_position : WebGLUniformLocation;
+  private static u_point_light_color : WebGLUniformLocation;
+  private static u_point_light_radius : WebGLUniformLocation;
+  private static u_point_light_count : WebGLUniformLocation;
   private static u_camera_position : WebGLUniformLocation;
   private static a_position : number;
   private static u_texture : WebGLUniformLocation;
@@ -52,8 +62,11 @@ export class Terrain implements DrawableObject {
     gl.uniformMatrix4fv(Terrain.u_model, false, this.model);
     gl.uniformMatrix4fv(Terrain.u_view, false, view);
     gl.uniformMatrix4fv(Terrain.u_projection, false, projection);
-    // gl.uniform2f(Terrain.u_camera_position, this.camera_pos[0], this.camera_pos[1]);
+    gl.uniformMatrix4fv(Terrain.u_inverse_transpose_model, false, glm.mat4.invert(glm.mat4.create(), this.model));
+    gl.uniform3fv(Terrain.u_camera_position, camera.getCameraPosition());
 
+    this.setupLights(gl, lights);
+    
     gl.uniform1i(Terrain.u_height_map, 0);
     gl.uniform1i(Terrain.u_texture, 1);
 
@@ -76,6 +89,49 @@ export class Terrain implements DrawableObject {
     gl.bindVertexArray(null);
   }
   
+  private setupLights(gl:WebGL2RenderingContext, lights: Light[]) {
+    // Get the Directional Light
+    const directional_lights = lights.filter((element) => {
+      return element instanceof DirectionalLight;
+    });
+
+    if (directional_lights.length > 0) {
+      const light = directional_lights[0] as DirectionalLight;
+      gl.uniform3fv(Terrain.u_directional_light_color, light.getColor());
+      gl.uniform3fv(Terrain.u_directional_light_vec, light.getDirection());
+    }
+
+    // Get the Point Lights
+    const point_lights = lights.filter((element) => {
+      return element instanceof PointLight;
+    });
+
+    const MAXIMUM_NUMBER_OF_POINT_LIGHTS = 8;
+    const point_lights_count = (point_lights.length < MAXIMUM_NUMBER_OF_POINT_LIGHTS) ? point_lights.length : MAXIMUM_NUMBER_OF_POINT_LIGHTS;
+    const point_light_radius = new Float32Array(point_lights_count);
+    const point_lights_color = new Float32Array(point_lights_count*3);
+    const point_lights_position = new Float32Array(point_lights_count*3);
+    for (let c = 0; c < point_lights_count; ++c){
+      const light = point_lights[c] as PointLight;
+      const color = light.getColor();
+      const position = light.getPosition();
+      const radius = light.getRadius();
+
+      point_light_radius[c] = radius;
+      point_lights_color[3*c + 0] = color[0];
+      point_lights_color[3*c + 1] = color[1];
+      point_lights_color[3*c + 2] = color[2];
+      point_lights_position[3*c + 0] = position[0];
+      point_lights_position[3*c + 1] = position[1];
+      point_lights_position[3*c + 2] = position[2];
+    }
+
+    gl.uniform1fv(Terrain.u_point_light_radius, point_light_radius);
+    gl.uniform3fv(Terrain.u_point_light_color, point_lights_color);
+    gl.uniform3fv(Terrain.u_point_light_position, point_lights_position);
+    gl.uniform1ui(Terrain.u_point_light_count, point_lights_count);
+  }
+
   setup(gl: WebGL2RenderingContext): void {
     // Create the program
     Terrain.program = WebGLUtils.createProgram(
@@ -91,8 +147,15 @@ export class Terrain implements DrawableObject {
     Terrain.u_projection = gl.getUniformLocation(Terrain.program, "u_projection") as WebGLUniformLocation;
     Terrain.u_height_map = gl.getUniformLocation(Terrain.program, "u_heightmap") as WebGLUniformLocation;
     Terrain.u_texture = gl.getUniformLocation(Terrain.program, "u_texture") as WebGLUniformLocation;
-    // Terrain.u_camera_position = gl.getUniformLocation(Terrain.program, "camera_position") as WebGLUniformLocation;
-    
+    Terrain.u_inverse_transpose_model = gl.getUniformLocation(Terrain.program, "u_inverse_transpose_model") as WebGLUniformLocation;
+    Terrain.u_directional_light_vec = gl.getUniformLocation(Terrain.program, "directional_light_vec") as WebGLUniformLocation;
+    Terrain.u_directional_light_color = gl.getUniformLocation(Terrain.program, "directional_light_color") as WebGLUniformLocation;
+    Terrain.u_point_light_position = gl.getUniformLocation(Terrain.program, "point_light_position") as WebGLUniformLocation;
+    Terrain.u_point_light_color = gl.getUniformLocation(Terrain.program, "point_light_color") as WebGLUniformLocation;
+    Terrain.u_point_light_radius = gl.getUniformLocation(Terrain.program, "point_light_radius") as WebGLUniformLocation;
+    Terrain.u_point_light_count = gl.getUniformLocation(Terrain.program, "point_light_count") as WebGLUniformLocation;
+    Terrain.u_camera_position = gl.getUniformLocation(Terrain.program, "camera_position") as WebGLUniformLocation;
+
     Terrain.a_position = gl.getAttribLocation(Terrain.program, "position");
     Terrain.texture = gl.createTexture() as WebGLTexture;
     gl.bindTexture(WebGL2RenderingContext.TEXTURE_2D, Terrain.texture);
@@ -292,8 +355,4 @@ export class Terrain implements DrawableObject {
 
     return [ data, indexes ];
   }
-
-  // public updateCameraPosition(new_pos : glm.vec2) {
-  //   this.camera_pos = new_pos;
-  // }
 }

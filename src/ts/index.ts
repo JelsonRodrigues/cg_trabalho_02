@@ -11,6 +11,9 @@ import { AnimatedObject } from "./Interfaces/AnimatedObject";
 import WebGLUtils from "./WebGLUtils";
 import { Origin } from "./Objects/Origin";
 import { Light } from "./Light/Light";
+import { DirectionalLight } from "./Light/DirectionalLight";
+import { PointLight } from "./Light/PointLight";
+import { PointLightDot } from "./Light/PointLightDot";
 
 var canva : HTMLCanvasElement;
 var gl : WebGL2RenderingContext;
@@ -21,11 +24,7 @@ var objects : Array<DrawableObject> = new Array();
 var animated_objects : Array<AnimatedObject> = new Array();
 var cameras : Array<Camera> = new Array();
 var current_camera : number = 0;
-var lights : Array<Light>;
-
-// Animation
-var animation_slider : HTMLInputElement;
-var start = Date.now();
+var lights : Array<Light> = new Array();
 
 var perspective = glm.mat4.create();
 
@@ -47,6 +46,7 @@ async function main() {
   gl = canva.getContext("webgl2") as WebGL2RenderingContext;
   gl.enable(gl.DEPTH_TEST);
   gl.clearColor(0.15, 0.18, 0.15, 1.0);
+  // gl.clearColor(0.984313725490196, 0.984313725490196, 0.9725490196078431, 1.0);
   gl.clear(WebGL2RenderingContext.COLOR_BUFFER_BIT)
   gl.viewport(0, 0, canva.width, canva.height)
 
@@ -58,9 +58,11 @@ async function main() {
   glm.mat4.perspective(perspective, field_of_view, aspect_ratio, near, far);
 
   terrain = new Terrain(gl);
+  // const origin = new Origin(gl);
+  // origin.model = terrain.model;
   objects.push(
     terrain,
-    new Origin(gl),
+    // origin,
   );
   
   const camera_path = new Spline();
@@ -91,8 +93,23 @@ async function main() {
     moving_camera,
   );
 
+  for (let i = 0; i < 8; ++i) {
+    const light_point = new PointLightDot(
+      gl, 
+      glm.vec3.transformMat4(
+        glm.vec3.create(), 
+        glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+        terrain.model), 
+      [Math.random(), Math.random(), Math.random()], 
+      10.0 * Math.random());
+    objects.push(light_point);
+    lights.push(light_point);
+  }
+  lights.push(
+    new DirectionalLight([0.707, -0.707, -0.707], [0.984313725490196, 0.984313725490196, 0.9725490196078431]),
+  );
+
   setupEventHandlers();
-  start = Date.now();
   gameLoop();
 }
 
