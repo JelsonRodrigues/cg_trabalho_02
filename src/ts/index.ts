@@ -65,7 +65,7 @@ async function main() {
   // const origin = new Origin(gl);
   // origin.model = terrain.model;
   objects.push(
-    new Cross(gl),
+    new Cross(gl, aspect_ratio),
     terrain,
     // origin,
   );

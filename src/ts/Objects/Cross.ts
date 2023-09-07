@@ -22,11 +22,11 @@ export class Cross implements DrawableObject {
   private static u_color : WebGLUniformLocation;
   private static vertices : number = 0;
 
-  constructor (gl : WebGL2RenderingContext) {
+  constructor (gl : WebGL2RenderingContext, aspect_ratio : number) {
     this.model = glm.mat4.create();
     
-    this.model[0] = 0.25;
-    this.model[5] = 0.25;
+    this.model[0] = 0.03;
+    this.model[5] = 0.03 * aspect_ratio;
 
     if (!Cross.initialized) {
       this.setup(gl);
@@ -36,6 +36,8 @@ export class Cross implements DrawableObject {
   }
 
   draw(gl : WebGL2RenderingContext, camera : Camera, projection : glm.mat4, lights : Light[]) : void {
+    
+    
     const view = camera.getViewMatrix();
     gl.useProgram(Cross.program as WebGLProgram);
 
