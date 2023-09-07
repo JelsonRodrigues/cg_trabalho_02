@@ -4,4 +4,5 @@ export interface AnimatedObject {
   toggleAnimation() : void;
   pauseAnimation() : void;
   resumeAnimation() : void;
+  getAnimationState() : boolean;
 }

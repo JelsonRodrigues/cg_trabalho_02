@@ -126,9 +126,11 @@ export class Terrain implements DrawableObject {
       point_lights_position[3*c + 2] = position[2];
     }
 
-    gl.uniform1fv(Terrain.u_point_light_radius, point_light_radius);
-    gl.uniform3fv(Terrain.u_point_light_color, point_lights_color);
-    gl.uniform3fv(Terrain.u_point_light_position, point_lights_position);
+    if (point_lights_count > 0) {
+      gl.uniform1fv(Terrain.u_point_light_radius, point_light_radius);
+      gl.uniform3fv(Terrain.u_point_light_color, point_lights_color);
+      gl.uniform3fv(Terrain.u_point_light_position, point_lights_position);
+    }
     gl.uniform1ui(Terrain.u_point_light_count, point_lights_count);
   }
 

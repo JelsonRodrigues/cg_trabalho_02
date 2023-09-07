@@ -43,4 +43,8 @@ export class MovingCamera extends Camera implements AnimatedObject {
   resumeAnimation(): void {
     this.paused_animation = false;
   }
+
+  getAnimationState(): boolean {
+    return this.paused_animation;
+  }
 }

@@ -14,6 +14,8 @@ import { Light } from "./Light/Light";
 import { DirectionalLight } from "./Light/DirectionalLight";
 import { PointLight } from "./Light/PointLight";
 import { PointLightDot } from "./Light/PointLightDot";
+import { LightBall } from "./Objects/LightBall";
+import { Cross } from "./Objects/Cross";
 
 var canva : HTMLCanvasElement;
 var gl : WebGL2RenderingContext;
@@ -27,6 +29,8 @@ var current_camera : number = 0;
 var lights : Array<Light> = new Array();
 
 var perspective = glm.mat4.create();
+
+const MAXIMUM_NUMBER_OF_POINT_LIGHTS = 8;
 
 function canvasResize(canva:HTMLCanvasElement) {
   const widht = window.innerWidth - 20;
@@ -61,6 +65,7 @@ async function main() {
   // const origin = new Origin(gl);
   // origin.model = terrain.model;
   objects.push(
+    new Cross(gl),
     terrain,
     // origin,
   );
@@ -94,16 +99,49 @@ async function main() {
   );
 
   for (let i = 0; i < 8; ++i) {
-    const light_point = new PointLightDot(
+    const position = glm.vec3.transformMat4(
+      glm.vec3.create(), 
+      glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+      terrain.model
+    );
+
+    const spline_follow = new Spline();
+    spline_follow.addCurve(
+      new CubicBezierCurve(
+        glm.vec3.transformMat4(
+          glm.vec3.create(), 
+          glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+          terrain.model
+        ),
+        glm.vec3.transformMat4(
+          glm.vec3.create(), 
+          glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+          terrain.model
+        ),
+        glm.vec3.transformMat4(
+          glm.vec3.create(), 
+          glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+          terrain.model
+        ),
+        glm.vec3.transformMat4(
+          glm.vec3.create(), 
+          glm.vec3.fromValues(0.5, 0.58, 0.5), 
+          terrain.model
+        )
+      )
+    )
+
+    const light_ball = new LightBall(
       gl, 
-      glm.vec3.transformMat4(
-        glm.vec3.create(), 
-        glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
-        terrain.model), 
+      position,
       [Math.random(), Math.random(), Math.random()], 
-      10.0 * Math.random());
-    objects.push(light_point);
-    lights.push(light_point);
+      10.0 * Math.random(),
+      spline_follow,
+      Math.random() * 15000 + 5000,
+    );
+    objects.push(light_ball);
+    lights.push(light_ball);
+    animated_objects.push(light_ball);
   }
   lights.push(
     new DirectionalLight([0.707, -0.707, -0.707], [0.984313725490196, 0.984313725490196, 0.9725490196078431]),
@@ -244,6 +282,35 @@ function setupEventHandlers() {
         const look_norm = glm.vec3.normalize(glm.vec3.create(), look_vector);
         camera.updateLookAt(glm.vec3.add(glm.vec3.create(), camera.getCameraPosition(), look_norm));
         break;
+      case "Space":
+        const point_lights = lights.filter((element) => { return element instanceof LightBall; });
+        if (point_lights.length < MAXIMUM_NUMBER_OF_POINT_LIGHTS){
+          const camera = cameras[current_camera];
+          const look_at = glm.vec3.sub(glm.vec3.create(), camera.getCameraLookingAt(), camera.getCameraPosition());
+          glm.vec3.normalize(look_at, look_at);
+
+          const spline_point_follow = new Spline();
+          spline_point_follow.addCurve(new CubicBezierCurve(
+            glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 1.0),
+            glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 10.0),
+            glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 15.0),
+            glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 20.0),
+          ));
+
+          const point_of_light = new LightBall(
+            gl, 
+            camera.getCameraPosition(), 
+            [Math.random(), Math.random(), Math.random()],
+            10.0,
+            spline_point_follow,
+            2500,
+            );
+          lights.push(point_of_light);
+          objects.push(point_of_light);
+          animated_objects.push(point_of_light);
+        }
+        
+        break;
     }
   });
 
@@ -259,7 +326,7 @@ function setupEventHandlers() {
     begin_movement[0] = event.clientX;
     begin_movement[1] = event.clientY;
     // console.log((begin_movement[0] *2.0) / canva.width -1.0, (-begin_movement[1] * 2.0) / canva.height + 1.0);
-    if (event.button == 0) {
+    if (event.button == 1) {
       // Check if the click is in a control point
       const splines = objects.filter((object) => {
         return object instanceof SplinePoints;
@@ -304,17 +371,18 @@ function setupEventHandlers() {
       // Otherwise 
       canva.addEventListener("pointermove", orbit_camera_with_mouse);
     }
-    else if (event.button == 1) {
+    else if (event.button == 0) {
       canva.addEventListener("pointermove", move_camera_with_mouse);
+
     }
   });
 
   canva.addEventListener("pointerup", (event) => {
-    if (event.button == 0) {
+    if (event.button == 1) {
       canva.removeEventListener("pointermove", orbit_camera_with_mouse);
       canva.removeEventListener("pointermove", modify_spline);
     }
-    else if (event.button == 1) {
+    else if (event.button == 0) {
       canva.removeEventListener("pointermove", move_camera_with_mouse);
     }
   });
@@ -408,7 +476,7 @@ function setupEventHandlers() {
     if (camera_position_in_world[1] < 0.0) camera_position_in_world[1] = 0.0; // do not let camera go underground
     camera.updateCameraPosition(camera_position_in_world);
   }
-
+  
   const move_camera_with_mouse = (event: PointerEvent) => {
     const camera = cameras[current_camera];
     const camera_position_in_world = camera.getCameraPosition();
@@ -455,7 +523,7 @@ function drawFrame() {
   );
 }
 
-var before:number = 0;
+var before:number = Date.now();
 function updateAnimation() {
   const now = Date.now();
   const fElapsedTime = now - before;
@@ -468,6 +536,26 @@ function updateAnimation() {
 }
 
 function updatePhisics() {
+  animated_objects = animated_objects.filter((element) => {
+    if (element instanceof LightBall) {
+      return !element.getAnimationState();
+    }
+    return true;
+  });
+
+  lights = lights.filter((element) => {
+    if (element instanceof LightBall) {
+      return !element.getAnimationState();
+    }
+    return true;
+  });
+
+  objects = objects.filter((element) => {
+    if (element instanceof LightBall) {
+      return !element.getAnimationState();
+    }
+    return true;
+  });
   // Check colisions 
   // Remove objects
 }

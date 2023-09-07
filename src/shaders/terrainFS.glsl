@@ -53,7 +53,7 @@ vec3 getLightIntensity() {
     if (distance < radius) {
       // Calculate specular
       vec3 mid_vector = normalize(normalize(vec_position_to_light) + surface_to_camera);
-      specular_highlight = pow(max(0.0, dot(normalized_normal, mid_vector)), 140.0);
+      specular_highlight = pow(max(0.0, dot(normalized_normal, mid_vector)), 140.0) ;
     }
 
     intensity += color.rgb * (max(0.0, dot(normalized_normal, normalize(vec_position_to_light))) * brightness + specular_highlight);
