@@ -16,6 +16,8 @@ import { PointLight } from "./Light/PointLight";
 import { PointLightDot } from "./Light/PointLightDot";
 import { LightBall } from "./Objects/LightBall";
 import { Cross } from "./Objects/Cross";
+import { Bat } from "./Objects/Bat";
+import { ColidableObject } from "./Interfaces/ColidableObject";
 
 var canva : HTMLCanvasElement;
 var gl : WebGL2RenderingContext;
@@ -27,6 +29,7 @@ var animated_objects : Array<AnimatedObject> = new Array();
 var cameras : Array<Camera> = new Array();
 var current_camera : number = 0;
 var lights : Array<Light> = new Array();
+var colidable_objects : Array<ColidableObject> = new Array();
 
 var perspective = glm.mat4.create();
 
@@ -70,6 +73,36 @@ async function main() {
     // origin,
   );
   
+  for (let i = 0; i < 4; ++i) {
+    const spline_follow = new Spline();
+    const fisrt = glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.6, Math.random()), terrain.model);
+    spline_follow.addCurve(
+      new CubicBezierCurve(
+        fisrt,
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.6, Math.random()), terrain.model))
+      );
+    spline_follow.addCurve(
+      new CubicBezierCurve(
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.6, Math.random()), terrain.model),
+        fisrt
+        )
+      );
+
+    const bat = new Bat(gl, spline_follow);
+
+    // const scale = (Math.random() / 2.0 + 0.5) * 2.0 - 1.0;
+    const scale = 3.0;
+    glm.mat4.scale(bat.model, bat.model, [scale, scale, scale])
+
+    objects.push(bat);
+    colidable_objects.push(bat);
+    animated_objects.push(bat);
+  }
+
   const camera_path = new Spline();
   camera_path.addCurve(new CubicBezierCurve(
     glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(0.0, 0.6, 0.0), terrain.model),
@@ -98,51 +131,52 @@ async function main() {
     moving_camera,
   );
 
-  for (let i = 0; i < 8; ++i) {
-    const position = glm.vec3.transformMat4(
-      glm.vec3.create(), 
-      glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
-      terrain.model
-    );
+  // for (let i = 0; i < 8; ++i) {
+  //   const position = glm.vec3.transformMat4(
+  //     glm.vec3.create(), 
+  //     glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+  //     terrain.model
+  //   );
 
-    const spline_follow = new Spline();
-    spline_follow.addCurve(
-      new CubicBezierCurve(
-        glm.vec3.transformMat4(
-          glm.vec3.create(), 
-          glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
-          terrain.model
-        ),
-        glm.vec3.transformMat4(
-          glm.vec3.create(), 
-          glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
-          terrain.model
-        ),
-        glm.vec3.transformMat4(
-          glm.vec3.create(), 
-          glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
-          terrain.model
-        ),
-        glm.vec3.transformMat4(
-          glm.vec3.create(), 
-          glm.vec3.fromValues(0.5, 0.58, 0.5), 
-          terrain.model
-        )
-      )
-    )
+  //   const spline_follow = new Spline();
+  //   spline_follow.addCurve(
+  //     new CubicBezierCurve(
+  //       glm.vec3.transformMat4(
+  //         glm.vec3.create(), 
+  //         glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+  //         terrain.model
+  //       ),
+  //       glm.vec3.transformMat4(
+  //         glm.vec3.create(), 
+  //         glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+  //         terrain.model
+  //       ),
+  //       glm.vec3.transformMat4(
+  //         glm.vec3.create(), 
+  //         glm.vec3.fromValues(Math.random(), 0.6, Math.random()), 
+  //         terrain.model
+  //       ),
+  //       glm.vec3.transformMat4(
+  //         glm.vec3.create(), 
+  //         glm.vec3.fromValues(0.5, 0.58, 0.5), 
+  //         terrain.model
+  //       )
+  //     )
+  //   )
 
-    const light_ball = new LightBall(
-      gl, 
-      position,
-      [Math.random(), Math.random(), Math.random()], 
-      10.0 * Math.random(),
-      spline_follow,
-      Math.random() * 15000 + 5000,
-    );
-    objects.push(light_ball);
-    lights.push(light_ball);
-    animated_objects.push(light_ball);
-  }
+  //   const light_ball = new LightBall(
+  //     gl, 
+  //     position,
+  //     [Math.random(), Math.random(), Math.random()], 
+  //     10.0 * Math.random(),
+  //     spline_follow,
+  //     Math.random() * 15000 + 5000,
+  //   );
+  //   objects.push(light_ball);
+  //   lights.push(light_ball);
+  //   animated_objects.push(light_ball);
+  //   colidable_objects.push(light_ball);
+  // }
   lights.push(
     new DirectionalLight([0.707, -0.707, -0.707], [0.984313725490196, 0.984313725490196, 0.9725490196078431]),
   );
@@ -308,6 +342,7 @@ function setupEventHandlers() {
           lights.push(point_of_light);
           objects.push(point_of_light);
           animated_objects.push(point_of_light);
+          colidable_objects.push(point_of_light);
         }
         
         break;
@@ -536,28 +571,88 @@ function updateAnimation() {
 }
 
 function updatePhisics() {
+  let colided_objects = 0;
+  for (let i = 0; i < colidable_objects.length; ++i) {
+    if (colidable_objects[i] instanceof LightBall){
+      console.log("Light Ball");
+      for (let j = 0; j < colidable_objects.length; ++j) {
+        if (!(colidable_objects[j] instanceof LightBall)){
+          if (colidable_objects[i].checkColision(colidable_objects[j])){
+            const obj_1 = colidable_objects[i];
+            const obj_2 = colidable_objects[j];
+            if (obj_1 instanceof LightBall || obj_1 instanceof Bat){
+              obj_1.pauseAnimation();
+            }
+            if (obj_2 instanceof LightBall || obj_2 instanceof Bat){
+              obj_2.pauseAnimation();
+            }
+            colided_objects += 2;
+            console.log("Colision");
+          }
+        }
+      }
+    }
+  }
+
   animated_objects = animated_objects.filter((element) => {
-    if (element instanceof LightBall) {
+    if (element instanceof LightBall || element instanceof Bat) {
       return !element.getAnimationState();
     }
     return true;
   });
 
   lights = lights.filter((element) => {
-    if (element instanceof LightBall) {
+    if (element instanceof LightBall || element instanceof Bat) {
       return !element.getAnimationState();
     }
     return true;
   });
 
   objects = objects.filter((element) => {
-    if (element instanceof LightBall) {
+    if (element instanceof LightBall || element instanceof Bat) {
       return !element.getAnimationState();
     }
     return true;
   });
-  // Check colisions 
-  // Remove objects
+
+  colidable_objects = colidable_objects.filter((element) => {
+    if (element instanceof LightBall || element instanceof Bat) {
+      return !element.getAnimationState();
+    }
+    return true;
+  });
+
+  for (let c = 0; c < colided_objects / 2; ++c) {
+    const spline_follow = new Spline();
+    const fisrt = glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.6, Math.random()), terrain.model);
+    spline_follow.addCurve(
+      new CubicBezierCurve(
+        fisrt,
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.6, Math.random()), terrain.model))
+      );
+    spline_follow.addCurve(
+      new CubicBezierCurve(
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.65, Math.random()), terrain.model),
+        glm.vec3.transformMat4(glm.vec3.create(), glm.vec3.fromValues(Math.random(), 0.6, Math.random()), terrain.model),
+        fisrt
+        )
+      );
+
+    const bat = new Bat(gl, spline_follow, Math.random() * 30_000 + 10_000);
+
+    const scale = (Math.random() / 2.0 + 0.5) * 2.0;
+    // const scale = 1.0;
+    glm.mat4.scale(bat.model, bat.model, [scale, scale, scale])
+
+    glm.mat4.rotate(bat.model, bat.model, Math.random() * Math.PI, [Math.random(), Math.random(), Math.random()]);
+
+    objects.push(bat);
+    colidable_objects.push(bat);
+    animated_objects.push(bat);
+  }
 }
 
 window.onload = main

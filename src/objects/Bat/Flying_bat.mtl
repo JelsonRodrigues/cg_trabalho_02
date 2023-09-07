@@ -1,0 +1,32 @@
+# Blender 3.6.2 MTL File: 'sphere bat musashi upload.blend'
+# www.blender.org
+
+newmtl Sphere_bat_map
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd Sphere bat mat.png
+
+newmtl den
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 1
+map_Kd Sphere bat mat.png
+map_Ke Sphere bat mat emission.png
+map_d Sphere bat mat.png
+
+newmtl wings
+Ns 360.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2

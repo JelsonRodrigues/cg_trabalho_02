@@ -11,14 +11,14 @@ import { PointLight } from "../Light/PointLight";
 import { AnimatedObject } from "../Interfaces/AnimatedObject";
 import { Spline } from "../../modules/Spline";
 import { CubicBezierCurve } from "../../modules/CubicBezierCurve";
+import { ColidableObject } from "../Interfaces/ColidableObject";
 
-export class LightBall extends PointLight implements DrawableObject, AnimatedObject {
+export class LightBall extends PointLight implements DrawableObject, AnimatedObject, ColidableObject {
   public model : glm.mat4;
   private path : Spline;
   private time_total : number = 10_000;
   private accumulated_time : number = 0;
   private paused_animation : boolean = false;
-
 
   private static initialized : boolean = false;
   private static program : WebGLProgram;
@@ -63,6 +63,21 @@ export class LightBall extends PointLight implements DrawableObject, AnimatedObj
     }
 
     LightBall.initialized = true;
+  }
+  getCenter(): glm.vec3 {
+    const origin = glm.vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+    glm.vec4.transformMat4(origin, origin, this.model);
+    return glm.vec3.fromValues(origin[0], origin[1], origin[2]);
+    // return glm.vec3.fromValues(this.model[12], this.model[13], this.model[14]);
+  }
+  checkColision(object: ColidableObject): boolean {
+    const distance = glm.vec3.length(glm.vec3.sub(glm.vec3.create(), this.getCenter(), object.getCenter()));
+    return distance <= this.getRadius() + object.getRadius();
+  }
+  getRadius(): number {
+    const unit_vector = glm.vec4.fromValues(0.58, 0.58, 0.58, 0.0);
+    glm.vec4.transformMat4(unit_vector, unit_vector, this.model);
+    return glm.vec4.length(unit_vector);
   }
 
   updateAnimation(fElapsedTime:number): void {

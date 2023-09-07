@@ -115,7 +115,7 @@ export class Terrain implements DrawableObject {
       const light = point_lights[c] as PointLight;
       const color = light.getColor();
       const position = light.getPosition();
-      const radius = light.getRadius();
+      const radius = light.getRadiusIlumination();
 
       point_light_radius[c] = radius;
       point_lights_color[3*c + 0] = color[0];
