@@ -105,7 +105,7 @@ export class Cross implements DrawableObject {
       -1.0, 0.0, 0.0,
       1.0, 0.0, 0.0,
       0.0, -1.0, 0.0,
-      0.0, 1.0, 1.0,
+      0.0, 1.0, 0.0,
     ]);
     gl.bufferData(
       WebGL2RenderingContext.ARRAY_BUFFER,
