@@ -325,7 +325,7 @@ function setupEventHandlers() {
 
           const spline_point_follow = new Spline();
           spline_point_follow.addCurve(new CubicBezierCurve(
-            glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 1.0),
+            glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 0.0),
             glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 10.0),
             glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 15.0),
             glm.vec3.scaleAndAdd(glm.vec3.create(), camera.getCameraPosition(), look_at, 20.0),
@@ -343,6 +343,13 @@ function setupEventHandlers() {
           objects.push(point_of_light);
           animated_objects.push(point_of_light);
           colidable_objects.push(point_of_light);
+
+          const audio = new Audio("./audio/ball_spawn.mp3");
+          audio.play();
+        }
+        else {
+          const audio = new Audio("./audio/error.mp3");
+          audio.play();
         }
         
         break;
@@ -574,7 +581,6 @@ function updatePhisics() {
   let colided_objects = 0;
   for (let i = 0; i < colidable_objects.length; ++i) {
     if (colidable_objects[i] instanceof LightBall){
-      console.log("Light Ball");
       for (let j = 0; j < colidable_objects.length; ++j) {
         if (!(colidable_objects[j] instanceof LightBall)){
           if (colidable_objects[i].checkColision(colidable_objects[j])){
@@ -587,7 +593,8 @@ function updatePhisics() {
               obj_2.pauseAnimation();
             }
             colided_objects += 2;
-            console.log("Colision");
+            const audio = new Audio("./audio/hit.mp3");
+            audio.play();
           }
         }
       }
